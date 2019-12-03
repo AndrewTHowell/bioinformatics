@@ -33,11 +33,6 @@ def dynprog(alphabet, scoringMatrix, sequence1, sequence2):
                                                        sequence1, sequence2,
                                                        vMatrix)
 
-    # printMatrix(vMatrix, sequence1, sequence2)
-    # printMatrix(backTraceMatrix, sequence1, sequence2)
-
-    # Back Track for best local alignment
-    # Scan for highest number in vMatrix (this is highest scoring alignment)
     bestScore = 1
     bestAlignmentStartCell = [-1, -1]
     for i in range(len(sequence1) + 1):
@@ -46,17 +41,11 @@ def dynprog(alphabet, scoringMatrix, sequence1, sequence2):
                 bestScore = vMatrix[i][j]
                 bestAlignmentStartCell = [i, j]
 
-    # print("bestScore: {0}".format(bestScore))
-    # print("bestAlignmentStartCell: {0}".format(bestAlignmentStartCell))
-
     alignmentLetters1 = ""
     alignmentIndices1 = []
     alignmentLetters2 = ""
     alignmentIndices2 = []
     i, j = bestAlignmentStartCell
-    # print("i: {0}".format(i))
-    # print("j: {0}".format(j))
-    # print("backTraceMatrix[i][j]: {0}".format(backTraceMatrix[i][j]))
     while "N" not in backTraceMatrix[i][j]:
         # If diagonal move is optimal
         if backTraceMatrix[i][j][0] == "D":
@@ -82,11 +71,6 @@ def dynprog(alphabet, scoringMatrix, sequence1, sequence2):
             jLetter = sequence2[j-1]
             alignmentLetters2 = jLetter + alignmentLetters2
             j -= 1
-
-    # print("alignmentLetters1: {0}".format(alignmentLetters1))
-    # print("alignmentIndices1: {0}".format(alignmentIndices1))
-    # print("alignmentLetters1: {0}".format(alignmentLetters1))
-    # print("alignmentIndices2: {0}".format(alignmentIndices2))
 
     return [bestScore, alignmentIndices1, alignmentIndices2]
 
@@ -210,7 +194,121 @@ def printMatrix(matrix, sequence1, sequence2, highlightCell=[-1, -1]):
 # Region: Linear Space Dynamic Programming
 
 def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
-    pass
+
+    # Initialise 2 rows (previous and current) (all 0s)
+    rows = [[], []]
+    for j in range(len(sequence2)+1):
+        rows[0].append(0)
+        rows[1].append(0)
+
+    # Calculate best possible score for each position
+    bestScore = 0
+    bestScorePosition = [0, 0]
+    # print(rows[1])
+    for i in range(len(sequence1)):
+        rows[1][0] = 0
+        for j in range(len(sequence2)):
+            score = dynproglinScore(i+1, j+1, alphabet, scoringMatrix,
+                                    sequence1, sequence2, rows)
+            rows[1][j+1] = score
+
+            if score > bestScore:
+                bestScore = score
+                bestScorePosition = [i+1, j+1]
+
+        # print(rows[1])
+        rows.reverse()
+
+    optimalAlignment = dynproglinRecurse(alphabet, scoringMatrix,
+                                         sequence1, sequence2)
+    print("optimalAlignment: {0}".format(optimalAlignment))
+
+
+def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2):
+
+    # Split sequence 1 (y-axis)
+    sequence1L = sequence1[:len(sequence1)//2]
+    sequence1R = sequence1[(len(sequence1)//2)-1:]
+
+    return [sequence1L, sequence1R]
+
+
+# Input: Positions i and j, ...
+# Output: Best score possible
+def dynproglinScore(i, j, alphabet, scoringMatrix, sequence1, sequence2,
+                    vMatrix, debug=False):
+
+    if debug:
+        printMatrix(vMatrix, sequence1, sequence2, [i, j])
+    if debug:
+        print("\nPosition i: {0}".format(i))
+    if debug:
+        print("Position j: {0}\n".format(j))
+
+    # Diagonal Move
+    vMatrixScore = vMatrix[0][j-1]
+    if debug:
+        print("vMatrixScore: {0}".format(vMatrixScore))
+
+    iLetter = sequence1[i-1]
+    iAlphabetPosition = alphabet.index(iLetter)
+    jLetter = sequence2[j-1]
+    jAlphabetPosition = alphabet.index(jLetter)
+    matchScore = scoringMatrix[iAlphabetPosition][jAlphabetPosition]
+    if debug:
+        print("matchScore: {0}".format(matchScore))
+
+    diagonalMoveScore = vMatrixScore + matchScore
+    if debug:
+        print("diagonalMoveScore: {0}\n".format(diagonalMoveScore))
+
+    # Up Move
+    vMatrixScore = vMatrix[0][j]
+    if debug:
+        print("vMatrixScore: {0}".format(vMatrixScore))
+
+    iLetter = sequence1[i-1]
+    iAlphabetPosition = alphabet.index(iLetter)
+    jLetter = "-"
+    jAlphabetPosition = len(alphabet)
+    matchScore = scoringMatrix[iAlphabetPosition][jAlphabetPosition]
+    if debug:
+        print("matchScore: {0}".format(matchScore))
+
+    upMoveScore = vMatrixScore + matchScore
+    if debug:
+        print("upMoveScore: {0}\n".format(upMoveScore))
+
+    # Left Move
+    vMatrixScore = vMatrix[1][j-1]
+    if debug:
+        print("vMatrixScore: {0}".format(vMatrixScore))
+
+    iLetter = "-"
+    iAlphabetPosition = len(alphabet)
+    jLetter = sequence2[j-1]
+    jAlphabetPosition = alphabet.index(jLetter)
+    matchScore = scoringMatrix[iAlphabetPosition][jAlphabetPosition]
+    if debug:
+        print("matchScore: {0}".format(matchScore))
+
+    leftMoveScore = vMatrixScore + matchScore
+    if debug:
+        print("leftMoveScore: {0}\n".format(leftMoveScore))
+
+    # Start new match
+    newMatchScore = 0
+    if debug:
+        print("newMatchScore: {0}\n".format(newMatchScore))
+
+    bestScore = max(diagonalMoveScore,
+                    upMoveScore,
+                    leftMoveScore,
+                    newMatchScore)
+    if debug:
+        print("bestScore: {0}".format(bestScore))
+
+    return bestScore
 
 
 # Region End
@@ -261,7 +359,7 @@ tests = [["ABC",
          ]
 
 for test in tests:
-    result = dynprog(test[0], test[1], test[2], test[3])
+    result = dynproglin(test[0], test[1], test[2], test[3])
 
     print("\nScore:   ", result[0])
     print("Indices: ", result[1], result[2])

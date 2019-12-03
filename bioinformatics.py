@@ -226,11 +226,38 @@ def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
 
 def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2):
 
-    # Split sequence 1 (y-axis)
-    sequence1L = sequence1[:len(sequence1)//2]
-    sequence1R = sequence1[(len(sequence1)//2)-1:]
+    # sequence1 [1,...,m]
+    # sequence2 [1,...,n]
 
-    return [sequence1L, sequence1R]
+    # Base Case
+    if len(sequence2) == 1:
+        # Align sequence1 with sequence2
+        for i in range(len(sequence1)):
+            decreasingI = len(sequence1) - i
+
+    else:
+        # Find i where best alignment crosses (i, n/2)
+        midPoint = len(sequence1)//2
+
+        bestScore = 0
+        bestI = -1
+        for i in range(len(sequence1)):
+            # Find best alignment
+            pass
+
+        # Split sequence1 (y-axis)
+        sequence1L = sequence1[:i]
+        sequence1R = sequence1[i:]
+        # Split sequence 2 (x-axis)
+        sequence2L = sequence1[:midPoint]
+        sequence2R = sequence1[midPoint:]
+        # Recurse to find optimal alignments
+        optimalAlignmentL = dynproglinRecurse(alphabet, scoringMatrix,
+                                              sequence1L, sequence2L)
+        optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
+                                              sequence1R, sequence2R)
+
+        return optimalAlignmentL + optimalAlignmentR
 
 
 # Input: Positions i and j, ...

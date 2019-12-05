@@ -195,73 +195,163 @@ def printMatrix(matrix, sequence1, sequence2, highlightCell=[-1, -1]):
 
 def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
 
-    # Initialise 2 rows (previous and current) (all 0s)
-    rows = [[], []]
-    for j in range(len(sequence2)+1):
-        rows[0].append(0)
-        rows[1].append(0)
+    print("sequence1: {0}".format(sequence1))
+    print("sequence2: {0}\n".format(sequence2))
 
-    # Calculate best possible score for each position
-    bestScore = 0
-    bestScorePosition = [0, 0]
-    # print(rows[1])
-    for i in range(len(sequence1)):
-        rows[1][0] = 0
-        for j in range(len(sequence2)):
-            score = dynproglinScore(i+1, j+1, alphabet, scoringMatrix,
-                                    sequence1, sequence2, rows)
-            rows[1][j+1] = score
+    [endPointScore, endPointPosition, null] = F(len(sequence1), len(sequence1),
+                                                alphabet, scoringMatrix,
+                                                sequence1, sequence2)
+    print(endPointScore, endPointPosition)
+    print()
 
-            if score > bestScore:
-                bestScore = score
-                bestScorePosition = [i+1, j+1]
+    [startPointScore, startPointPosition, null] = B(0, 0,
+                                                    alphabet, scoringMatrix,
+                                                    sequence1, sequence2)
+    print(startPointScore, startPointPosition)
 
-        # print(rows[1])
-        rows.reverse()
+    if startPointScore != endPointScore:
+        print("PROBLEM: start and end scores not equal")
+
+    optimalSequence1 = sequence1[startPointPosition[0]:endPointPosition[0]]
+    optimalSequence2 = sequence2[startPointPosition[1]:endPointPosition[1]]
+
+    # print("\noptimalSequence1: {0}".format(optimalSequence1))
+    # print("optimalSequence2: {0}".format(optimalSequence2))
 
     optimalAlignment = dynproglinRecurse(alphabet, scoringMatrix,
-                                         sequence1, sequence2)
+                                         optimalSequence1, optimalSequence2)
+
     print("optimalAlignment: {0}".format(optimalAlignment))
 
 
 def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2):
 
-    # sequence1 [1,...,m]
-    # sequence2 [1,...,n]
+    print("\n\nsequence1: {0}".format(sequence1))
+    print("sequence2: {0}".format(sequence2))
 
     # Base Case
     if len(sequence2) == 1:
         # Align sequence1 with sequence2
-        for i in range(len(sequence1)):
-            decreasingI = len(sequence1) - i
+        print("BASE CASE")
 
     else:
         # Find i where best alignment crosses (i, n/2)
-        midPoint = len(sequence1)//2
+        midpoint = len(sequence1)//2
 
         bestScore = 0
         bestI = -1
         for i in range(len(sequence1)):
-            # Find best alignment
-            pass
+            print("\ni: {0}".format(i))
+            # Find best alignment score along midpoint column
+            print("F:")
+            [Fij, null, fGlobalScore] = F(i+1, midpoint, alphabet,
+                                          scoringMatrix, sequence1, sequence2)
+            print("B:")
+            [Bij, null, bGlobalScore] = B(i+1, midpoint, alphabet,
+                                          scoringMatrix, sequence1, sequence2)
+
+            bestAlignmentScoreThroughij = fGlobalScore + bGlobalScore
+            print("fGlobalScore: {0}".format(fGlobalScore))
+            print("bGlobalScore: {0}".format(bGlobalScore))
+            print("bestAlignmentScoreThroughij: {0}"
+                  .format(bestAlignmentScoreThroughij))
+            if bestAlignmentScoreThroughij > bestScore:
+                bestScore = bestAlignmentScoreThroughij
+                bestI = i+1
+
+        print("bestPosition: [{0},{1}]".format(bestI, midpoint))
 
         # Split sequence1 (y-axis)
-        sequence1L = sequence1[:i]
-        sequence1R = sequence1[i:]
+        sequence1L = sequence1[:bestI]
+        sequence1R = sequence1[bestI:]
         # Split sequence 2 (x-axis)
-        sequence2L = sequence1[:midPoint]
-        sequence2R = sequence1[midPoint:]
+        sequence2L = sequence1[:midpoint]
+        sequence2R = sequence1[midpoint:]
+
         # Recurse to find optimal alignments
+        print("Left Recursion with sequences:")
+        print("variable: {0}".format(sequence1L))
+        print("variable: {0}".format(sequence2L))
         optimalAlignmentL = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1L, sequence2L)
+        print("Right Recursion with sequences:")
+        print("variable: {0}".format(sequence1R))
+        print("variable: {0}".format(sequence2R))
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1R, sequence2R)
 
         return optimalAlignmentL + optimalAlignmentR
 
 
-# Input: Positions i and j, ...
-# Output: Best score possible
+def F(i, j, alphabet, scoringMatrix, sequence1, sequence2):
+
+    restrictedSequence1 = sequence1[:i]
+    restrictedSequence2 = sequence2[:j]
+
+    print("restrictedSequence1: {0}".format(restrictedSequence1))
+    print("restrictedSequence2: {0}".format(restrictedSequence2))
+
+    return FBfunction(i, j, alphabet, scoringMatrix,
+                      restrictedSequence1, restrictedSequence2)
+
+
+def B(i, j, alphabet, scoringMatrix, sequence1, sequence2):
+
+    restrictedSequence1 = sequence1[i:]
+    restrictedSequence2 = sequence2[j:]
+
+    reversedRestrictedSequence1 = restrictedSequence1[::-1]
+    reversedRestrictedSequence2 = restrictedSequence2[::-1]
+
+    print("restrictedSequence1: {0}".format(restrictedSequence1))
+    print("restrictedSequence2: {0}".format(restrictedSequence2))
+
+    [bestScore,
+     bestScorePosition,
+     globalScore] = FBfunction(i, j, alphabet, scoringMatrix,
+                               reversedRestrictedSequence1,
+                               reversedRestrictedSequence2)
+
+    bestScorePosition[0] = (len(reversedRestrictedSequence1)
+                            - bestScorePosition[0])
+    bestScorePosition[1] = (len(reversedRestrictedSequence2)
+                            - bestScorePosition[1])
+
+    return [bestScore, bestScorePosition, globalScore]
+
+
+def FBfunction(i, j, alphabet, scoringMatrix, sequence1, sequence2):
+
+    # Initialise 2 rows (previous and current) (all 0s)
+    rows = [[], []]
+    for j in range(len(sequence2)+1):
+        rows[0].append(0)
+        rows[1].append(0)
+
+    bestScore = 0
+    bestScorePosition = [0, 0]
+    globalScore = 0
+    # Calculate best possible score for each position
+    print(rows[1])
+    for i in range(len(sequence1)):
+        rows[1][0] = 0
+        for j in range(len(sequence2)):
+            score = dynproglinScore(i+1, j+1, alphabet, scoringMatrix,
+                                    sequence1, sequence2,
+                                    rows)
+            rows[1][j+1] = score
+            globalScore = score
+
+            if score > bestScore:
+                bestScore = score
+                bestScorePosition = [i+1, j+1]
+
+        print(rows[1])
+        rows.reverse()
+
+    return [bestScore, bestScorePosition, globalScore]
+
+
 def dynproglinScore(i, j, alphabet, scoringMatrix, sequence1, sequence2,
                     vMatrix, debug=False):
 
@@ -348,7 +438,14 @@ def heuralign(alphabet, scoringMatrix, sequence1, sequence2):
 
 # Region End
 
-tests = [["ABC",
+tests = [["AB",
+          [[1, -1, -2],
+           [-1, 1, -2],
+           [-2, -2, -10]],
+          "AABBAA",
+          "AAABAA"],
+
+         ["ABC",
           [[1, -1, -2, -1],
            [-1, 2, -4, -1],
            [-2, -4, 3, -2],

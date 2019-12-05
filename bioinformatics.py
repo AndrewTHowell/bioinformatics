@@ -193,23 +193,26 @@ def printMatrix(matrix, sequence1, sequence2, highlightCell=[-1, -1]):
 
 # Region: Linear Space Dynamic Programming
 
-def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
+def dynproglin(alphabet, scoringMatrix, sequence1, sequence2, debug=False):
 
-    print("\n*************************************************************"
-          "***************************************************************")
-    print("sequence1: {0}".format(sequence1))
-    print("sequence2: {0}\n".format(sequence2))
+    if debug:
+        print("\n*************************************************************"
+              "***************************************************************")
+    if debug:
+        print("sequence1: {0}".format(sequence1))
+        print("sequence2: {0}\n".format(sequence2))
 
     [endPointScore, endPointPosition] = F(len(sequence1), len(sequence1),
                                           alphabet, scoringMatrix,
                                           sequence1, sequence2,
-                                          debug=False, local=True)
+                                          debug, local=True)
 
     [startPointScore, startPointPosition] = B(0, 0, alphabet, scoringMatrix,
                                               sequence1, sequence2,
-                                              debug=False, local=True)
-    print(startPointScore, startPointPosition)
-    print(endPointScore, endPointPosition)
+                                              debug, local=True)
+    if debug:
+        print(startPointScore, startPointPosition)
+        print(endPointScore, endPointPosition)
 
     if startPointScore != endPointScore:
         print("PROBLEM: start and end scores not equal")
@@ -217,14 +220,16 @@ def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
     optimalSequence1 = sequence1[startPointPosition[0]:endPointPosition[0]]
     optimalSequence2 = sequence2[startPointPosition[1]:endPointPosition[1]]
 
-    print("\noptimalSequence1: {0}".format(optimalSequence1))
-    print("optimalSequence2: {0}".format(optimalSequence2))
+    if debug:
+        print("\noptimalSequence1: {0}".format(optimalSequence1))
+        print("optimalSequence2: {0}".format(optimalSequence2))
 
     optimalAlignment = dynproglinRecurse(alphabet, scoringMatrix,
                                          optimalSequence1, optimalSequence2,
-                                         0, debug=True)
+                                         startPointPosition, debug)
 
-    print("optimalAlignment: {0}".format(optimalAlignment))
+    if debug:
+        print("optimalAlignment: {0}".format(optimalAlignment))
 
     return optimalAlignment
 
@@ -232,19 +237,63 @@ def dynproglin(alphabet, scoringMatrix, sequence1, sequence2):
 def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                       indexOffset, debug):
 
-    print("sequence1: {0}".format(sequence1))
-    print("len(sequence1): {0}".format(len(sequence1)))
-    print("sequence2: {0}".format(sequence2))
-    print("len(sequence2): {0}".format(len(sequence2)))
+    if debug:
+        print("sequence1: {0}".format(sequence1))
+        print("len(sequence1): {0}".format(len(sequence1)))
+        print("sequence2: {0}".format(sequence2))
+        print("len(sequence2): {0}".format(len(sequence2)))
 
     # Base Cases
     if sequence1 == "" or sequence2 == "":
-        print("BASE CASE: Align with Del")
+        if debug:
+            print("BASE CASE: Align with Del")
         return [0, [], []]
     elif len(sequence1) <= 1 and len(sequence2) <= 1:
-        # Align sequence1 with sequence2
-        print("BASE CASE: Align")
-        return [0, [indexOffset], [indexOffset]]
+        if debug:
+            print("BASE CASE: Align")
+            print("indexOffset[0]: {0}".format(indexOffset[0]))
+            print("indexOffset[1]: {0}".format(indexOffset[1]))
+        return [0, [indexOffset[0]], [indexOffset[1]]]
+    elif len(sequence2) == 1:
+        if debug:
+            print("BASE CASE: Align sequence2 letter with best in sequence1")
+        bestMatch = None
+        bestMatchScore = None
+        for i in range(len(sequence1)):
+            matchScore = (scoringMatrix[alphabet.index(sequence2[0])]
+                          [alphabet.index(sequence1[i])])
+            if bestMatch is None or matchScore > bestMatchScore:
+                bestMatch = i
+                bestMatchScore = matchScore
+        midpoint = len(sequence1)//2
+        indexOffset[0] = indexOffset[0] - midpoint
+        if debug:
+            print("bestMatch: {0}".format(bestMatch))
+            print("bestMatchScore: {0}".format(bestMatchScore))
+            print()
+            print("indexOffset[0]: {0}".format(indexOffset[0]))
+            print("indexOffset[1]: {0}".format(indexOffset[1]))
+        return [0, [indexOffset[0] + i], [indexOffset[1] - 1]]
+    elif len(sequence1) == 1:
+        if debug:
+            print("BASE CASE: Align sequence1 letter with best in sequence2")
+        bestMatch = None
+        bestMatchScore = None
+        for j in range(len(sequence2)):
+            matchScore = (scoringMatrix[alphabet.index(sequence1[0])]
+                          [alphabet.index(sequence2[j])])
+            if bestMatch is None or matchScore > bestMatchScore:
+                bestMatch = j
+                bestMatchScore = matchScore
+        midpoint = len(sequence2)//2
+        indexOffset[1] = indexOffset[1] - midpoint
+        if debug:
+            print("bestMatch: {0}".format(bestMatch))
+            print("bestMatchScore: {0}".format(bestMatchScore))
+            print()
+            print("indexOffset[0]: {0}".format(indexOffset[0]))
+            print("indexOffset[1]: {0}".format(indexOffset[1]))
+        return [0, [indexOffset[0] - 1], [indexOffset[1] + j]]
 
     else:
         # Find i where best alignment crosses (i, n/2)
@@ -288,6 +337,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
 
         bestPosition = [bestI, midpoint]
         if debug:
+            print("\nbestScore: {0}".format(bestScore))
             print("bestPosition: {0}".format(bestPosition))
 
         # Split sequence1 (y-axis)
@@ -305,17 +355,20 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                                               indexOffset, debug)
         if debug:
             print("\nRIGHT RECURSION WITH SEQUENCES:")
+        indexOffset[0] += midpoint
+        indexOffset[1] += midpoint
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1R, sequence2R,
-                                              indexOffset + midpoint, debug)
+                                              indexOffset, debug)
 
-        print("\n**********************************")
-        print("optimalAlignmentL[1]: {0}".format(optimalAlignmentL[1]))
-        print("optimalAlignmentR[1]: {0}".format(optimalAlignmentR[1]))
-        print()
-        print("optimalAlignmentL[2]: {0}".format(optimalAlignmentL[2]))
-        print("optimalAlignmentR[2]: {0}".format(optimalAlignmentR[2]))
-        print("**********************************\n")
+        if debug:
+            print("\n**********************************")
+            print("optimalAlignmentL[1]: {0}".format(optimalAlignmentL[1]))
+            print("optimalAlignmentR[1]: {0}".format(optimalAlignmentR[1]))
+            print()
+            print("optimalAlignmentL[2]: {0}".format(optimalAlignmentL[2]))
+            print("optimalAlignmentR[2]: {0}".format(optimalAlignmentR[2]))
+            print("**********************************\n")
 
         return [bestScore, optimalAlignmentL[1] + optimalAlignmentR[1],
                 optimalAlignmentL[2] + optimalAlignmentR[2]]
@@ -555,8 +608,8 @@ tests = [["AB",
            [-2, -4, 3, -2],
            [-1, -1, -2, 0]],
           "AABBAACA",
-          "CBACCCBA"]]#,
-"""
+          "CBACCCBA"],
+
          ["ABCD",
           [[1, -5, -5, -5, -1],
            [-5, 1, -5, -5, -1],
@@ -585,9 +638,9 @@ tests = [["AB",
           ("DDCDDCCCDCBCCCCDDDCDBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBDCDCD"
            "CDCD")]
          ]
-"""
-for test in tests:
-    result = dynproglin(test[0], test[1], test[2], test[3])
 
-    print("\nScore:   ", result[0])
-    print("Indices: ", result[1], result[2])
+test = tests[2]
+result = dynproglin(test[0], test[1], test[2], test[3], debug=True)
+
+print("\nScore:   ", result[0])
+print("Indices: ", result[1], result[2])

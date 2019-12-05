@@ -242,6 +242,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         print("len(sequence1): {0}".format(len(sequence1)))
         print("sequence2: {0}".format(sequence2))
         print("len(sequence2): {0}".format(len(sequence2)))
+        print("indexOffset: {0}".format(indexOffset))
 
     # Base Cases
     if sequence1 == "" or sequence2 == "":
@@ -251,8 +252,6 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
     elif len(sequence1) <= 1 and len(sequence2) <= 1:
         if debug:
             print("BASE CASE: Align")
-            print("indexOffset[0]: {0}".format(indexOffset[0]))
-            print("indexOffset[1]: {0}".format(indexOffset[1]))
         return [0, [indexOffset[0]], [indexOffset[1]]]
     elif len(sequence2) == 1:
         if debug:
@@ -262,7 +261,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         for i in range(len(sequence1)):
             matchScore = (scoringMatrix[alphabet.index(sequence2[0])]
                           [alphabet.index(sequence1[i])])
-            if bestMatch is None or matchScore > bestMatchScore:
+            if bestMatch is None or matchScore > bestMatchSco6re:
                 bestMatch = i
                 bestMatchScore = matchScore
         midpoint = len(sequence1)//2
@@ -270,9 +269,6 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
-            print()
-            print("indexOffset[0]: {0}".format(indexOffset[0]))
-            print("indexOffset[1]: {0}".format(indexOffset[1]))
         return [0, [indexOffset[0] + i], [indexOffset[1] - 1]]
     elif len(sequence1) == 1:
         if debug:
@@ -290,9 +286,6 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
-            print()
-            print("indexOffset[0]: {0}".format(indexOffset[0]))
-            print("indexOffset[1]: {0}".format(indexOffset[1]))
         return [0, [indexOffset[0] - 1], [indexOffset[1] + j]]
 
     else:
@@ -302,30 +295,28 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         bestScore = None
         bestI = None
         for i in range(len(sequence1)+1):
-            if debug:
-                print("\ni: {0}".format(i))
+            # if debug:
+            #     print("\ni: {0}".format(i))
             # Find best alignment score along midpoint column
-            if debug:
-                print("F:")
+            # if debug:
+            #     print("F:")
             fGlobalScore = F(i, midpoint, alphabet, scoringMatrix,
-                             sequence1, sequence2, debug, local=False)
-            if debug:
-                print("B:")
+                             sequence1, sequence2, False, local=False)
+            # if debug:
+            #     print("B:")
             bGlobalScore = B(i, midpoint, alphabet, scoringMatrix,
-                             sequence1, sequence2, debug, local=False)
+                             sequence1, sequence2, False, local=False)
 
             if fGlobalScore is not None and bGlobalScore is not None:
                 bestAlignmentScoreThroughij = fGlobalScore + bGlobalScore
             else:
                 bestAlignmentScoreThroughij = None
 
-            if debug:
-                print("fGlobalScore: {0}".format(fGlobalScore))
-            if debug:
-                print("bGlobalScore: {0}".format(bGlobalScore))
-            if debug:
-                print("bestAlignmentScoreThroughij: {0}"
-                      .format(bestAlignmentScoreThroughij))
+            # if debug:
+            #     print("fGlobalScore: {0}".format(fGlobalScore))
+            #     print("bGlobalScore: {0}".format(bGlobalScore))
+            #     print("bestAlignmentScoreThroughij: {0}"
+            #           .format(bestAlignmentScoreThroughij))
 
             if bestScore is None:
                 bestScore = bestAlignmentScoreThroughij
@@ -355,7 +346,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                                               indexOffset, debug)
         if debug:
             print("\nRIGHT RECURSION WITH SEQUENCES:")
-        indexOffset[0] += midpoint
+        indexOffset[0] += bestI
         indexOffset[1] += midpoint
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1R, sequence2R,
@@ -363,11 +354,10 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
 
         if debug:
             print("\n**********************************")
-            print("optimalAlignmentL[1]: {0}".format(optimalAlignmentL[1]))
-            print("optimalAlignmentR[1]: {0}".format(optimalAlignmentR[1]))
-            print()
-            print("optimalAlignmentL[2]: {0}".format(optimalAlignmentL[2]))
-            print("optimalAlignmentR[2]: {0}".format(optimalAlignmentR[2]))
+            print("optimalAlignment: {0} + {1}".format(optimalAlignmentL[1],
+                                                       optimalAlignmentR[1]))
+            print("optimalAlignment: {0} + {1}".format(optimalAlignmentL[2],
+                                                       optimalAlignmentR[2]))
             print("**********************************\n")
 
         return [bestScore, optimalAlignmentL[1] + optimalAlignmentR[1],
@@ -476,17 +466,20 @@ def globalFBfunction(i, j, alphabet, scoringMatrix, sequence1, sequence2,
     rows = [[], []]
     rows[0].append(0)
     for j in range(len(sequence2)):
-        rows[0].append(rows[0][-1]
-                       + scoringMatrix[alphabet.index(sequence2[j-1])][-1])
+        previousScore = rows[0][-1]
+        rows[0].append(previousScore
+                       + scoringMatrix[alphabet.index(sequence2[j])][-1])
+
+    for j in range(len(sequence2)+1):
         rows[1].append(0)
-    rows[1].append(0)
 
     globalScore = rows[0][-1]
     # Calculate best possible score for each position
     if debug:
         print(rows[0])
     for i in range(len(sequence1)):
-        rows[1][0] = (rows[0][0]
+        previousScore = rows[0][0]
+        rows[1][0] = (previousScore
                       + scoringMatrix[alphabet.index(sequence1[i])][-1])
         globalScore = rows[1][0]
         for j in range(len(sequence2)):
@@ -643,4 +636,5 @@ test = tests[2]
 result = dynproglin(test[0], test[1], test[2], test[3], debug=True)
 
 print("\nScore:   ", result[0])
-print("Indices: ", result[1], result[2])
+print("Indices:  ", result[1], result[2])
+print("Expected: ",  [5, 6, 7, 8, 9, 10, 11, 12, 18, 19], [0, 1, 5, 6, 11, 12, 16, 17, 18, 19])

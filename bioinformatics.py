@@ -242,7 +242,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         print("len(sequence1): {0}".format(len(sequence1)))
         print("sequence2: {0}".format(sequence2))
         print("len(sequence2): {0}".format(len(sequence2)))
-        print("indexOffset: {0}".format(indexOffset))
+        print("indexOffset: {0}\n".format(indexOffset))
 
     # Base Cases
     if sequence1 == "" or sequence2 == "":
@@ -269,7 +269,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
-        return [0, [indexOffset[0] + i], [indexOffset[1] - 1]]
+        return [0, [indexOffset[0] + i], [indexOffset[1]]]
     elif len(sequence1) == 1:
         if debug:
             print("BASE CASE: Align sequence1 letter with best in sequence2")
@@ -286,7 +286,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
-        return [0, [indexOffset[0] - 1], [indexOffset[1] + j]]
+        return [0, [indexOffset[0]], [indexOffset[1] + j]]
 
     else:
         # Find i where best alignment crosses (i, n/2)
@@ -338,6 +338,9 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         sequence2L = sequence2[:midpoint]
         sequence2R = sequence2[midpoint:]
 
+        rIndexOffset = [indexOffset[0] + len(sequence1L),
+                        indexOffset[1] + len(sequence2L)]
+
         # Recurse to find optimal alignments
         if debug:
             print("\nLEFT RECURSION WITH SEQUENCES:")
@@ -347,11 +350,9 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("\nRIGHT RECURSION WITH SEQUENCES:")
             print("indexOffset: {0}".format(indexOffset))
-        indexOffset[0] += bestI
-        indexOffset[1] += midpoint
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1R, sequence2R,
-                                              indexOffset, debug)
+                                              rIndexOffset, debug)
 
         if debug:
             print("\n**********************************")

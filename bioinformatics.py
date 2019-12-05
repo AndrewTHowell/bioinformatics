@@ -239,9 +239,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
 
     if debug:
         print("sequence1: {0}".format(sequence1))
-        print("len(sequence1): {0}".format(len(sequence1)))
         print("sequence2: {0}".format(sequence2))
-        print("len(sequence2): {0}".format(len(sequence2)))
         print("indexOffset: {0}\n".format(indexOffset))
 
     # Base Cases
@@ -249,10 +247,12 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         if debug:
             print("BASE CASE: Align with Del")
         return [0, [], []]
+
     elif len(sequence1) <= 1 and len(sequence2) <= 1:
         if debug:
             print("BASE CASE: Align")
         return [0, [indexOffset[0]], [indexOffset[1]]]
+
     elif len(sequence2) == 1:
         if debug:
             print("BASE CASE: Align sequence2 letter with best in sequence1")
@@ -261,15 +261,17 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         for i in range(len(sequence1)):
             matchScore = (scoringMatrix[alphabet.index(sequence2[0])]
                           [alphabet.index(sequence1[i])])
-            if bestMatch is None or matchScore > bestMatchSco6re:
+            if bestMatch is None or matchScore > bestMatchScore:
                 bestMatch = i
                 bestMatchScore = matchScore
-        midpoint = len(sequence1)//2
+        midpoint = (len(sequence1)+1)//2
         indexOffset[0] = indexOffset[0] - midpoint
         if debug:
+            print("Start Position: {0}\n".format(indexOffset))
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
         return [0, [indexOffset[0] + i], [indexOffset[1]]]
+
     elif len(sequence1) == 1:
         if debug:
             print("BASE CASE: Align sequence1 letter with best in sequence2")
@@ -281,7 +283,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
             if bestMatch is None or matchScore > bestMatchScore:
                 bestMatch = j
                 bestMatchScore = matchScore
-        midpoint = len(sequence2)//2
+        midpoint = (len(sequence2)+1)//2
         indexOffset[1] = indexOffset[1] - midpoint
         if debug:
             print("bestMatch: {0}".format(bestMatch))
@@ -290,7 +292,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
 
     else:
         # Find i where best alignment crosses (i, n/2)
-        midpoint = len(sequence1)//2
+        midpoint = len(sequence2)//2
 
         bestScore = None
         bestI = None
@@ -349,7 +351,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                                               indexOffset, debug)
         if debug:
             print("\nRIGHT RECURSION WITH SEQUENCES:")
-            print("indexOffset: {0}".format(indexOffset))
+            print("rIndexOffset: {0}".format(rIndexOffset))
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,
                                               sequence1R, sequence2R,
                                               rIndexOffset, debug)
@@ -637,6 +639,8 @@ tests = [["AB",
 test = tests[2]
 result = dynproglin(test[0], test[1], test[2], test[3], debug=True)
 
-print("\nScore:   ", result[0])
-print("Indices:  ", result[1], result[2])
-print("Expected: ",  [5, 6, 7, 8, 9, 10, 11, 12, 18, 19], [0, 1, 5, 6, 11, 12, 16, 17, 18, 19])
+print("\nScore:", result[0])
+print("Sequence1 Indices: ", result[1])
+print("Sequence1 Expected:", [5, 6, 7, 8, 9, 10, 11, 12, 18, 19])
+print("\nSequence2 Indices: ", result[2])
+print("Sequence2 Expected:", [0, 1, 5, 6, 11, 12, 16, 17, 18, 19])

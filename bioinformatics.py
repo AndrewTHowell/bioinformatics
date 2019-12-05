@@ -197,12 +197,11 @@ def dynproglin(alphabet, scoringMatrix, sequence1, sequence2, debug=False):
 
     if debug:
         print("\n*************************************************************"
-              "***************************************************************")
-    if debug:
+              "**************************************************************")
         print("sequence1: {0}".format(sequence1))
         print("sequence2: {0}\n".format(sequence2))
 
-    [endPointScore, endPointPosition] = F(len(sequence1), len(sequence1),
+    [endPointScore, endPointPosition] = F(len(sequence1), len(sequence2),
                                           alphabet, scoringMatrix,
                                           sequence1, sequence2,
                                           debug, local=True)
@@ -210,6 +209,7 @@ def dynproglin(alphabet, scoringMatrix, sequence1, sequence2, debug=False):
     [startPointScore, startPointPosition] = B(0, 0, alphabet, scoringMatrix,
                                               sequence1, sequence2,
                                               debug, local=True)
+
     if debug:
         print(startPointScore, startPointPosition)
         print(endPointScore, endPointPosition)
@@ -265,12 +265,10 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                 bestMatch = i
                 bestMatchScore = matchScore
         midpoint = (len(sequence1)+1)//2
-        indexOffset[0] = indexOffset[0] - midpoint
         if debug:
-            print("Start Position: {0}\n".format(indexOffset))
             print("bestMatch: {0}".format(bestMatch))
             print("bestMatchScore: {0}".format(bestMatchScore))
-        return [0, [indexOffset[0] + i], [indexOffset[1]]]
+        return [0, [indexOffset[0] + bestMatch], [indexOffset[1]]]
 
     elif len(sequence1) == 1:
         if debug:
@@ -283,12 +281,10 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
             if bestMatch is None or matchScore > bestMatchScore:
                 bestMatch = j
                 bestMatchScore = matchScore
-        midpoint = (len(sequence2)+1)//2
-        indexOffset[1] = indexOffset[1] - midpoint
         if debug:
             print("bestMatch: {0}".format(bestMatch))
-            print("bestMatchScore: {0}".format(bestMatchScore))
-        return [0, [indexOffset[0]], [indexOffset[1] + j]]
+            print("indexOffset[1]: {0}".format(indexOffset[1]))
+        return [0, [indexOffset[0]], [indexOffset[1] + bestMatch]]
 
     else:
         # Find i where best alignment crosses (i, n/2)
@@ -297,15 +293,13 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
         bestScore = None
         bestI = None
         for i in range(len(sequence1)+1):
-            # if debug:
-            #     print("\ni: {0}".format(i))
-            # Find best alignment score along midpoint column
-            # if debug:
-            #     print("F:")
+            if False:  # debug:
+                print("\ni: {0}".format(i))
+                print("F:")
             fGlobalScore = F(i, midpoint, alphabet, scoringMatrix,
                              sequence1, sequence2, False, local=False)
-            # if debug:
-            #     print("B:")
+            if False:  # debug:
+                print("B:")
             bGlobalScore = B(i, midpoint, alphabet, scoringMatrix,
                              sequence1, sequence2, False, local=False)
 
@@ -314,11 +308,11 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
             else:
                 bestAlignmentScoreThroughij = None
 
-            # if debug:
-            #     print("fGlobalScore: {0}".format(fGlobalScore))
-            #     print("bGlobalScore: {0}".format(bGlobalScore))
-            #     print("bestAlignmentScoreThroughij: {0}"
-            #           .format(bestAlignmentScoreThroughij))
+            if False:  # debug:
+                print("fGlobalScore: {0}".format(fGlobalScore))
+                print("bGlobalScore: {0}".format(bGlobalScore))
+                print("bestAlignmentScoreThroughij: {0}"
+                      .format(bestAlignmentScoreThroughij))
 
             if bestScore is None:
                 bestScore = bestAlignmentScoreThroughij
@@ -592,20 +586,23 @@ def heuralign(alphabet, scoringMatrix, sequence1, sequence2):
 
 # Region End
 
-tests = [["AB",
-          [[1, -1, -2],
-           [-1, 1, -2],
-           [-2, -2, -10]],
-          "ABA",
-          "ABA"],
+def identical(sequence1, sequence2):
+    if len(sequence1) != len(sequence2):
+        return False
+    for i in range(len(sequence1)):
+        if sequence1[i] != sequence2[i]:
+            return False
+    return True
 
-         ["ABC",
+tests = [["ABC",
           [[1, -1, -2, -1],
            [-1, 2, -4, -1],
            [-2, -4, 3, -2],
            [-1, -1, -2, 0]],
           "AABBAACA",
-          "CBACCCBA"],
+          "CBACCCBA",
+          [3, 5, 6],
+          [1, 2, 3]],
 
          ["ABCD",
           [[1, -5, -5, -5, -1],
@@ -614,7 +611,9 @@ tests = [["AB",
            [-5, -5, -5, 6, -4],
            [-1, -1, -4, -4, -9]],
           "AAAAACCDDCCDDAAAAACC",
-          "CCAAADDAAAACCAAADDCCAAAA"],
+          "CCAAADDAAAACCAAADDCCAAAA",
+          [5, 6, 7, 8, 9, 10, 11, 12, 18, 19],
+          [0, 1, 5, 6, 11, 12, 16, 17, 18, 19]],
 
          ["ABCD",
           [[1, -5, -5, -5, -1],
@@ -623,7 +622,9 @@ tests = [["AB",
            [-5, -5, -5, 6, -4],
            [-1, -1, -4, -4, -9]],
           "AACAAADAAAACAADAADAAA",
-          "CDCDDD"],
+          "CDCDDD",
+          [2, 6, 11, 14, 17],
+          [0, 1, 2, 3, 4]],
 
          ["ABCD",
           [[1, -5, -5, -5, -1],
@@ -632,15 +633,19 @@ tests = [["AB",
            [-5, -5, -5, 6, -4],
            [-1, -1, -4, -4, -9]],
           "DDCDDCCCDCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCDDDCDADCDCDCDCD",
-          ("DDCDDCCCDCBCCCCDDDCDBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBDCDCD"
-           "CDCD")]
+          ("DDCDDCCCDCBCCCCDDDCDBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+           "BBBDCDCDCDCD"),
+          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 40, 41, 42, 43, 44, 45, 46, 47,
+           48, 50, 51, 52, 53, 54, 55, 56, 57, 58],
+          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18,
+           19, 61, 62, 63, 64, 65, 66, 67, 68, 69]]
          ]
 
-test = tests[2]
-result = dynproglin(test[0], test[1], test[2], test[3], debug=True)
+for test in tests:
+    result = dynproglin(test[0], test[1], test[2], test[3], debug=False)
 
-print("\nScore:", result[0])
-print("Sequence1 Indices: ", result[1])
-print("Sequence1 Expected:", [5, 6, 7, 8, 9, 10, 11, 12, 18, 19])
-print("\nSequence2 Indices: ", result[2])
-print("Sequence2 Expected:", [0, 1, 5, 6, 11, 12, 16, 17, 18, 19])
+    print("\nScore:", result[0])
+    print("Sequence1 Indices: ", result[1])
+    print(identical(result[1], test[4]))
+    print("Sequence2 Indices: ", result[2])
+    print(identical(result[2], test[5]))

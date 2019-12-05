@@ -346,6 +346,7 @@ def dynproglinRecurse(alphabet, scoringMatrix, sequence1, sequence2,
                                               indexOffset, debug)
         if debug:
             print("\nRIGHT RECURSION WITH SEQUENCES:")
+            print("indexOffset: {0}".format(indexOffset))
         indexOffset[0] += bestI
         indexOffset[1] += midpoint
         optimalAlignmentR = dynproglinRecurse(alphabet, scoringMatrix,

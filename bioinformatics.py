@@ -594,6 +594,7 @@ def identical(sequence1, sequence2):
             return False
     return True
 
+
 tests = [["ABC",
           [[1, -1, -2, -1],
            [-1, 2, -4, -1],
@@ -646,6 +647,4 @@ for test in tests:
 
     print("\nScore:", result[0])
     print("Sequence1 Indices: ", result[1])
-    print(identical(result[1], test[4]))
     print("Sequence2 Indices: ", result[2])
-    print(identical(result[2], test[5]))

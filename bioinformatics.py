@@ -4,6 +4,10 @@
 
 import numpy as np
 
+import random
+
+import time
+
 # Region End
 
 
@@ -642,9 +646,30 @@ tests = [["ABC",
            19, 61, 62, 63, 64, 65, 66, 67, 68, 69]]
          ]
 
-for test in tests:
-    result = dynproglin(test[0], test[1], test[2], test[3], debug=False)
+tests1000 = ["ABCD",
+             [[1, -5, -5, -5, -1],
+              [-5, 1, -5, -5, -1],
+              [-5, -5, 5, -5, -4],
+              [-5, -5, -5, 6, -4],
+              [-1, -1, -4, -4, -9]]
+             ]
 
-    print("\nScore:", result[0])
-    print("Sequence1 Indices: ", result[1])
-    print("Sequence2 Indices: ", result[2])
+sequence1 = ""
+sequence2 = ""
+for each in range(1000):
+    index = random.randint(0, 3)
+    sequence1 += tests1000[0][index]
+for each in range(1000):
+    index = random.randint(0, 3)
+    sequence2 += tests1000[0][index]
+
+startTime = time.time()
+result = dynproglin(tests1000[0], tests1000[1], sequence1, sequence2, debug=False)
+endTime = time.time()
+
+secondsTaken = endTime - startTime
+
+print("\nScore:", result[0])
+print("Sequence1 Indices: ", result[1])
+print("Sequence2 Indices: ", result[2])
+print("Seconds taken: ", secondsTaken)
